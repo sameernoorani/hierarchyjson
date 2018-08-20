@@ -477,6 +477,10 @@
 <body>
 
   Please click on the 2nd level rows to expand.
+
+  Scroll up and down to zoom in and out.
+
+  Click and drag to move around graph.
   <div id="body"></div>
 
 
