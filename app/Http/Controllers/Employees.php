@@ -118,7 +118,7 @@ class Employees extends Controller
             return "There is a loop or invalid data";
         }
 
-        if ($count != count($employees) && $count != -1) {
+        if ($count != count($employees)) {
             /* looks like there was a repeated/duplicate key data */
             return "There is a loop or invalid data";
         }
@@ -150,19 +150,19 @@ class Employees extends Controller
                 }
 
                 if ($graph == 0) {
-                  unset($node->id);
-                  unset($node->name);
-                  $employees_data[$mid]->$name[] = $node;
+                    unset($node->id);
+                    unset($node->name);
+                    $employees_data[$mid]->$name[] = $node;
                 } else {
-                  $employees_data[$mid]->children[] = $node;
+                    $employees_data[$mid]->children[] = $node;
                 }
 
                 return null;
             } else {
                 /* an employee without a manager, a boss -- remove un-needed data */
-                if ($graph == 0){
-                  unset($node->name);
-                  unset($node->id);
+                if ($graph == 0) {
+                    unset($node->name);
+                    unset($node->id);
                 }
                 unset($node->manager_name);
                 unset($node->manager_id);
@@ -216,44 +216,45 @@ class Employees extends Controller
         $data = $request->json()->all();
 
         return self::buildTree($data, $count, $graph = 1);
-
     }
 
     /**
-     * [upload description]
-     * @param  Request $request [description]
-     * @return [type]           [description]
+     * Upload file, parse data, show view with parsed data.
+     * @param  Request $request Raw uploaded file.
+     * @return [type]           Parsed data with view.
      */
 
-    public function upload(Request $request){
+    public function upload(Request $request)
+    {
 
       /* store the uploaded file, convert to json data, pass it to parser function */
-      $json = $request->file('json');
+        $json = $request->file('json');
 
-      $input['jsonname'] = time().'.'.$json->getClientOriginalExtension();
+        $input['jsonname'] = time().'.'.$json->getClientOriginalExtension();
 
-      $destinationPath = public_path('/json');
+        $destinationPath = public_path('/json');
 
-      $json->move($destinationPath, $input['jsonname']);
+        $json->move($destinationPath, $input['jsonname']);
 
-      $string = File::get($destinationPath.'/'.$input['jsonname']);
+        $string = File::get($destinationPath.'/'.$input['jsonname']);
 
-      $count = substr_count($string, ':');
+        /* count how many lines of data there is --  used for data verfication */
 
-      $json_file = json_decode($string, true);
+        $count = substr_count($string, ':');
 
-      $data = self::buildTree($json_file, $count, $graph = 1);
+        $json_file = json_decode($string, true);
 
+        /* once the data is converted to an array, submit to buildTree function */
 
-      if ($data == 'There is a loop or invalid data'){
-        $data = [];
-        $data['error'] = 'There is a loop or invalid data';
-      }
+        $data = self::buildTree($json_file, $count, $graph = 1);
 
-      return view('index')->with('data', $data);
+        /* if an error is returned, show an error in the font-end view */
 
+        if ($data == 'There is a loop or invalid data') {
+            $data = [];
+            $data['error'] = 'There is a loop or invalid data';
+        }
 
+        return view('index')->with('data', $data);
     }
-
-
 }
