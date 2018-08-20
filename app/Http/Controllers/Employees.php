@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use File;
 
 class Employees extends Controller
 {
@@ -109,17 +110,17 @@ class Employees extends Controller
 
         if (count($boss) == 0) {
             /* no head boss, invalid data */
-            return "There is no head boss or loop.";
+            return "There is a loop or invalid data";
         }
 
         if (count($not_managers) == 0) {
             /* no endpoints, invalid data */
-            return "There is a loop.";
+            return "There is a loop or invalid data";
         }
 
-        if ($count != count($employees)) {
+        if ($count != count($employees) && $count != -1) {
             /* looks like there was a repeated/duplicate key data */
-            return "There is a loop.";
+            return "There is a loop or invalid data";
         }
 
 
@@ -167,7 +168,6 @@ class Employees extends Controller
                 unset($node->manager_id);
             }
 
-
             return $node;
         }, $employees_data);
 
@@ -175,7 +175,7 @@ class Employees extends Controller
 
         $organized = array_values(array_filter($organized));
 
-        return json_encode($organized, JSON_PRETTY_PRINT);
+        return json_encode($organized[0], JSON_PRETTY_PRINT);
     }
 
     /**
@@ -216,6 +216,43 @@ class Employees extends Controller
         $data = $request->json()->all();
 
         return self::buildTree($data, $count, $graph = 1);
+
+    }
+
+    /**
+     * [upload description]
+     * @param  Request $request [description]
+     * @return [type]           [description]
+     */
+
+    public function upload(Request $request){
+
+      /* store the uploaded file, convert to json data, pass it to parser function */
+      $json = $request->file('json');
+
+      $input['jsonname'] = time().'.'.$json->getClientOriginalExtension();
+
+      $destinationPath = public_path('/json');
+
+      $json->move($destinationPath, $input['jsonname']);
+
+      $string = File::get($destinationPath.'/'.$input['jsonname']);
+
+      $count = substr_count($string, ':');
+
+      $json_file = json_decode($string, true);
+
+      $data = self::buildTree($json_file, $count, $graph = 1);
+
+
+      if ($data == 'There is a loop or invalid data'){
+        $data = [];
+        $data['error'] = 'There is a loop or invalid data';
+      }
+
+      return view('index')->with('data', $data);
+
+
     }
 
 
