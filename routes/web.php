@@ -10,3 +10,13 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+
+
+Route::get('upload', function () {
+
+    return view('upload');
+
+});
+
+Route::post('upload', ['as'=>'fileUpload','uses'=>'employees@upload']);
