@@ -13,37 +13,34 @@ class Employees extends Controller
      * @return [array] $employee_array  processed list with unique names of employees.
      */
 
-    public function employeesList($employees){
+    public function employeesList($employees)
+    {
+        $employee_array = array();
 
-      /* $employee array will consist of {$id => $name, $id => name, etc. }*/
+        /* Go through the json data, assemble unique list of employee names.
+        Then use the generated list of employee names to create an organized */
 
-      $employee_array = array();
+        foreach ($employees as $employee => $manager) {
+            if (!(in_array($employee, $employee_array))) {
+                $employee_array[] = $employee;
+            }
 
-      /* Go through the json data, assemble unique list of employee names.
-      Then use the generated list of employee names to create an organized */
+            if (!(in_array($manager, $employee_array))) {
+                $employee_array[] = $manager;
+            }
+        }
 
-      foreach ($employees as $employee => $manager) {
-          if (!(in_array($employee, $employee_array))) {
-              $employee_array[] = $employee;
-          }
-
-          if (!(in_array($manager, $employee_array))) {
-              $employee_array[] = $manager;
-          }
-      }
-
-      return $employee_array;
-
+        return $employee_array;
     }
 
-    public function buildTree($employees)
+    /**
+     * [employeesData Return employee data as array of arrays]
+     * @param  [type] $employee_array processed list with unique names of employees.
+     * @param  [type] $employees      raw employees data.
+     * @return [type]                 $employee_data consists of an array of arrays, of employee data.
+     */
+    public function employeesData($employee_array, $employees)
     {
-
-        $employee_array = self::employeesList($employees);
-
-        /* $employee_data will consist of an array of arrays.  Each subarray will contain the data of employee such as
-        their manager id, their id, their name.  The id will be generated using $employee_array */
-
         $employees_data = [];
 
         foreach ($employees as $employee => $manager) {
@@ -53,9 +50,18 @@ class Employees extends Controller
             $employees_data[$e_id] = array("id" => "$e_id", "name" => $employee, "manager_id" => "$m_id", "manager_name" => $manager);
         }
 
+        return $employees_data;
+    }
 
-        /* find out which employees are not managers */
-
+    /**
+     * [notManagers Returns array of non-manager employees.]
+     * @param  [type] $employees_data $employee_data consists of an array of arrays, of employee data.
+     * @param  [type] $employees      raw employees data.
+     * @param  [type] $employee_array processed list with unique names of employees.
+     * @return [type]                 return list of employees that aren't managers.
+     */
+    public function notManagers($employees_data, $employees, $employee_array)
+    {
         $managers = [];
 
         foreach ($employees_data as $employee) {
@@ -64,14 +70,59 @@ class Employees extends Controller
 
         $not_managers = array_diff_key($employee_array, $managers);
 
+        return $not_managers;
+    }
 
-        /* add bosses to the $employees_data */
+    /**
+     * [buildTree given the json data, build a tree]
+     * @param  [type] $employees employees data converted to array
+     * @param  [type] $count     number of lines of data provided in the initial json string.
+     * @return [type]            organized employee data.
+     */
+    public function buildTree($employees, $count)
+    {
+
+        /* $employee array will consist of {$id => $name, $id => name, etc. }*/
+
+        $employee_array = self::employeesList($employees);
+
+        /* $employee_data will consist of an array of arrays.  Each subarray will contain the data of employee such as
+        their manager id, their id, their name.  The id will be generated using $employee_array */
+
+        $employees_data = self::employeesData($employee_array, $employees);
+
+        /* find out which employees are not managers */
+
+        $not_managers = self::notManagers($employees_data, $employees, $employee_array);
+
+
 
         $boss = array_diff_key($employee_array, $employees_data);
+
+        /* add bosses to the $employees_data */
 
         foreach ($boss as $id => $name) {
             $employees_data[$id] = array("id" => "$id", "name" => $name, "manager_id" => "", "manager_name" => "");
         }
+
+        /* check for errors in data */
+
+        if (count($boss) == 0) {
+            /* no head boss, invalid data */
+            return "There is no head boss or loop.";
+        }
+
+        if (count($not_managers) == 0) {
+            /* no endpoints, invalid data */
+            return "There is a loop.";
+        }
+
+        if ($count != count($employees)){
+          /* looks like there was a repeated/duplicate key data */
+          
+          return "There is a loop.";
+        }
+
 
         /* convert from array of arrays to array of objects */
 
@@ -118,7 +169,7 @@ class Employees extends Controller
 
         /* clear null entries and extract values to remove index data */
 
-        $organized= array_values(array_filter($organized));
+        $organized = array_values(array_filter($organized));
 
 
         return json_encode($organized, JSON_PRETTY_PRINT);
@@ -134,9 +185,14 @@ class Employees extends Controller
     public function index(Request $request)
     {
         /* retrieve data, pass it to tree function */
+
+        $raw_data = $request->getContent();
+
+        $count = substr_count($raw_data, ':');
+
         $data = $request->json()->all();
 
-        return self::buildTree($data);
+        return self::buildTree($data, $count);
     }
 
     /**
