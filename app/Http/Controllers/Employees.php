@@ -144,16 +144,21 @@ class Employees extends Controller
 
                 unset($node->manager_id);
                 unset($node->manager_name);
+
+
                 if (array_key_exists($node->id, $not_managers) && $graph == 0) {
+                    /*  These employees are not managers.  If graph = 0, add empty [] braces. for JSON formatting */
                     $namein = $node->name;
                     $node->$namein = [];
                 }
 
                 if ($graph == 0) {
+                   /* These employees have non-empty underlings, if graph = 0, unset name and id */
                     unset($node->id);
                     unset($node->name);
                     $employees_data[$mid]->$name[] = $node;
                 } else {
+                  /* keep name and id for graph data */
                     $employees_data[$mid]->children[] = $node;
                 }
 
@@ -161,6 +166,8 @@ class Employees extends Controller
             } else {
                 /* an employee without a manager, a boss -- remove un-needed data */
                 if ($graph == 0) {
+                    /* if graph = 0, remove name and id data */
+
                     unset($node->name);
                     unset($node->id);
                 }
@@ -199,7 +206,7 @@ class Employees extends Controller
     }
 
     /**
-     * Display graph of the submitted json
+     * Generate graph data of the submitted json
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -221,7 +228,7 @@ class Employees extends Controller
     /**
      * Upload file, parse data, show view with parsed data.
      * @param  Request $request Raw uploaded file.
-     * @return [type]           Parsed data with view.
+     * @return [type]           Parsed data with index view.
      */
 
     public function upload(Request $request)
