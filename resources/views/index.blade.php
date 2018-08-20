@@ -481,6 +481,31 @@
 
 
   <script language="javascript" type="text/javascript">
+    <?php
+if (isset($data['error'])){
+  ?>
+
+    alert('error');
+
+    <?php
+}else {
+?>
+
+    var u_data = <?php
+echo $data;
+?>;
+
+
+
+    data = u_data;
+
+    <?php
+
+}
+?>
+
+
+
     orgChart.initTree({
       id: "#body",
       data: data,
