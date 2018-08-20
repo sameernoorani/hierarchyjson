@@ -489,22 +489,19 @@
 if (isset($data['error'])){
   ?>
 
-    alert('error');
+    alert('<?php echo $data['error'];?>');
 
     <?php
 }else {
 ?>
 
     var u_data = <?php
-echo $data;
-?>;
-
-
+    echo $data;
+    ?>;
 
     data = u_data;
 
-    <?php
-
+  <?php
 }
 ?>
 
