@@ -38,6 +38,7 @@ class Employees extends Controller
      * @param  [type] $employee_array processed list with unique names of employees.
      * @param  [type] $employees      raw employees data.
      * @return [type]                 $employee_data consists of an array of arrays, of employee data.
+     *                                format: $array[$employee_id] => array("id" => "$e_id", "name" => $employee, "manager_id" => "$m_id", "manager_name" => $manager)
      */
     public function employeesData($employee_array, $employees)
     {
@@ -79,7 +80,7 @@ class Employees extends Controller
      * @param  [type] $count     number of lines of data provided in the initial json string.
      * @return [type]            organized employee data.
      */
-    public function buildTree($employees, $count)
+    public function buildTree($employees, $count, $graph)
     {
 
         /* $employee array will consist of {$id => $name, $id => name, etc. }*/
@@ -131,7 +132,7 @@ class Employees extends Controller
 
         /* iterate through the object datatype and organize the employees */
 
-        $organized = array_map(function ($node) use ($employees_data, $not_managers) {
+        $organized = array_map(function ($node) use ($employees_data, $not_managers, $graph) {
             if (!empty($node->manager_id)) {
                 /* an employee with a manager, place under right employee, return null */
 
@@ -142,22 +143,27 @@ class Employees extends Controller
 
                 unset($node->manager_id);
                 unset($node->manager_name);
-                if (array_key_exists($node->id, $not_managers)) {
+                if (array_key_exists($node->id, $not_managers) && $graph == 0) {
                     $namein = $node->name;
                     $node->$namein = [];
                 }
-                unset($node->id);
-                unset($node->name);
 
-                $employees_data[$mid]->$name[] = $node;
-
+                if ($graph == 0) {
+                  unset($node->id);
+                  unset($node->name);
+                  $employees_data[$mid]->$name[] = $node;
+                } else {
+                  $employees_data[$mid]->children[] = $node;
+                }
 
                 return null;
             } else {
                 /* an employee without a manager, a boss -- remove un-needed data */
-                unset($node->name);
+                if ($graph == 0){
+                  unset($node->name);
+                  unset($node->id);
+                }
                 unset($node->manager_name);
-                unset($node->id);
                 unset($node->manager_id);
             }
 
@@ -168,7 +174,6 @@ class Employees extends Controller
         /* clear null entries and extract values to remove index data */
 
         $organized = array_values(array_filter($organized));
-
 
         return json_encode($organized, JSON_PRETTY_PRINT);
     }
@@ -190,7 +195,28 @@ class Employees extends Controller
 
         $data = $request->json()->all();
 
-        return self::buildTree($data, $count);
+        return self::buildTree($data, $count, $graph = 0);
     }
+
+    /**
+     * Display graph of the submitted json
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function graph(Request $request)
+    {
+        /* retrieve data, pass it to tree function */
+
+        $raw_data = $request->getContent();
+
+        $count = substr_count($raw_data, ':');
+
+        $data = $request->json()->all();
+
+        return self::buildTree($data, $count, $graph = 1);
+    }
+
 
 }

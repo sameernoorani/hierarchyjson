@@ -14,3 +14,5 @@ use Illuminate\Http\Request;
 */
 
 Route::match(['get', 'post'], '/index', 'employees@index');
+
+Route::match(['get', 'post'], '/graph', 'employees@graph');
