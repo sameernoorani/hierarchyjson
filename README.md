@@ -1,5 +1,6 @@
-Full stack development task
-Ever changing company hierarchy Introduction
+
+Ever changing company hierarchy Introduction:
+
 Help HR manager The Company get a grasp of her ever changing company’s hierarchy! Every week The Company receives a JSON of employees and their supervisors from her demanding CEO Chris, who keeps changing his mind about how to structure his company. Chris wants this JSON to be restructured, so that he can better see the employees hierarchy. Chris is especially happy if The Company provides him with a visual graphical representation of the hierarchy.
 
 To make her life easier, The Company wants to have the following:
