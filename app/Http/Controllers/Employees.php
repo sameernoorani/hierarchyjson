@@ -5,6 +5,21 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use File;
 
+/**
+ * [Employees notes from call]
+ * -remove json_decode when reading file string,  replace legacy function json_decode for security, because it does not return errors.
+ * -move code for errors, for whitelisting of data for json, instead of unsetting data, create a new variable.
+ * -appointed arrays within the declaration of functions
+ * -set from public to private for code classes that are smaller
+ * -make code simpler
+ * -test using function algorithm
+ *
+ *
+ * */
+
+
+ */
+
 class Employees extends Controller
 {
 
@@ -204,6 +219,38 @@ class Employees extends Controller
 
         return self::buildTree($data, $count, $graph = 0);
     }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function test(Request $request)
+    {
+        /* retrieve data, pass it to tree function */
+
+        $raw_data = $request->getContent();
+
+        //
+        // $count = substr_count($raw_data, ':');
+
+        echo 'lol';
+
+        $name = $request->input('data');
+
+        $data = $name->json()->all();
+
+
+        return $data;
+
+        die;
+
+
+        return self::buildTree($data, $count, $graph = 0);
+    }
+
 
     /**
      * Generate graph data of the submitted json
